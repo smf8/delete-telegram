@@ -1,33 +1,34 @@
 package main
 
 import (
+	"context"
+	"fmt"
 	"github.com/sirupsen/logrus"
-	"sync"
+	"net/http"
 	"os"
 	"os/signal"
+	"sync"
 	"syscall"
-	"fmt"
-	"net/http"
-	"context"
 	"time"
 )
 
 func main() {
-	badgerDB, err := initDB(defaultConfig)
+	cfg := InitConfig()
+	badgerDB, err := initDB(cfg)
 	if err != nil {
 		logrus.Fatalf("failed to initialize database: %s", err.Error())
 	}
 
 	store := &Store{db: badgerDB}
-	server := NewEchoServer(defaultConfig)
+	server := NewEchoServer(cfg)
 	authHandler := &AuthHandler{
 		userStateMap: &sync.Map{},
 		store:        store,
-		config:       defaultConfig,
+		config:       cfg,
 	}
 	deleteHandler := &DeleteHandler{
 		store:  store,
-		config: defaultConfig,
+		config: cfg,
 	}
 
 	RegisterEndpoints(server, authHandler, deleteHandler)
@@ -36,7 +37,7 @@ func main() {
 	signal.Notify(sig, os.Interrupt, syscall.SIGTERM)
 
 	go func() {
-		if err := server.Start(fmt.Sprintf(":%d", defaultConfig.ListenPort)); err != http.ErrServerClosed && err != nil {
+		if err := server.Start(fmt.Sprintf(":%d", cfg.ListenPort)); err != http.ErrServerClosed && err != nil {
 			server.Logger.Fatal(err.Error())
 		}
 	}()
