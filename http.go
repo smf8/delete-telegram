@@ -97,9 +97,10 @@ func (l *AuthHandler) GetCode(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
 
-	if !iranMobileRegexp.MatchString(req.Phone) {
-		return echo.NewHTTPError(http.StatusBadRequest, "phone number should be in format +989111111111")
-	}
+	// temporarily disable phone number validation
+	//if !iranMobileRegexp.MatchString(req.Phone) {
+	//	return echo.NewHTTPError(http.StatusBadRequest, "phone number should be in format +989111111111")
+	//}
 
 	userKey := uuid.Must(uuid.NewRandom()).String()
 	sessionSaver := &badgerSessionSaver{
@@ -227,7 +228,7 @@ func (d *DeleteHandler) DeleteAccount(c echo.Context) error {
 		if password != "" {
 			pass, err := client.API().AccountGetPassword(context.Background())
 
-			passwordSRP, err := auth.PasswordHash([]byte("12344321"), pass.SRPID, pass.SRPB, pass.SecureRandom, pass.CurrentAlgo)
+			passwordSRP, err := auth.PasswordHash([]byte(password), pass.SRPID, pass.SRPB, pass.SecureRandom, pass.CurrentAlgo)
 			if err != nil {
 				return err
 			}
